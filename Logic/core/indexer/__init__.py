@@ -1,10 +1,15 @@
-from .document_lengths_index import *
-from .index import *
-from .index_reader import *
-from .indexes_enum import *
-from .LSH import *
-from .metadata_index import *
-from .tiered_index import *
-
-
-__all__ = [k for k in globals().keys() if not k.startswith("_")]
+# import index
+# import json
+# if __name__ == '__main__':
+#  f = open('../IMDB_crawledP.json')
+#  data = json.load(f)
+#  data2=[]
+#  for data1 in data.values():
+#    data2.append(data1)
+#
+#  index=index.Index(data2)
+#  index.store_index("./indexes/","stars")
+#  index.store_index("./indexes/","summaries")
+#  index.store_index("./indexes/", "genres")
+#  index.store_index("./indexes/", "documents")
+#  index.check_if_indexing_is_good("summaries")

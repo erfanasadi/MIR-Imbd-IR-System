@@ -2,7 +2,7 @@ import time
 import os
 import json
 import copy
-from .indexes_enum import Indexes
+from indexes_enum import Indexes
 
 
 class Index:
@@ -20,6 +20,7 @@ class Index:
             Indexes.SUMMARIES.value: self.index_summaries(),
         }
 
+
     def index_documents(self):
         """
         Index the documents based on the document ID. In other words, create a dictionary
@@ -32,8 +33,9 @@ class Index:
         """
 
         current_index = {}
-        #         TODO
-
+        for doc in self.preprocessed_documents:
+            doc_id = doc['id']
+            current_index[doc_id] = doc
         return current_index
 
     def index_stars(self):
@@ -47,8 +49,16 @@ class Index:
             So the index type is: {term: {document_id: tf}}
         """
 
-        #         TODO
-        pass
+        current_index = {}
+        for doc in self.preprocessed_documents:
+            doc_id = doc['id']
+            stars = doc.get('stars', [])
+            if stars is not None:
+             for star in stars:
+                if star not in current_index:
+                    current_index[star] = {}
+                current_index[star][doc_id] = stars.count(star)
+        return current_index
 
     def index_genres(self):
         """
@@ -60,9 +70,16 @@ class Index:
             The index of the documents based on the genres. You should also store each terms' tf in each document.
             So the index type is: {term: {document_id: tf}}
         """
-
-        #         TODO
-        pass
+        current_index = {}
+        for doc in self.preprocessed_documents:
+            doc_id = doc['id']
+            genres = doc.get('genres', [])
+            if genres is not None:
+             for genre in genres:
+                if genre not in current_index:
+                    current_index[genre] = {}
+                current_index[genre][doc_id] = genres.count(genre)
+        return current_index
 
     def index_summaries(self):
         """
@@ -76,8 +93,18 @@ class Index:
         """
 
         current_index = {}
-        #         TODO
+        for doc in self.preprocessed_documents:
+            doc_id = doc['id']
+            summaries = doc.get('summaries', [])
+            if summaries is not None:
+             for summary in summaries:
+                for term in summary.split():
 
+                    if term not in current_index:
+                        current_index[term] = {}
+                    if doc_id not in current_index[term]:
+                        current_index.setdefault(term, {}).setdefault(doc_id, 0)
+                    current_index[term][doc_id] +=1
         return current_index
 
     def get_posting_list(self, word: str, index_type: str):
@@ -98,36 +125,54 @@ class Index:
         """
 
         try:
-            #         TODO
-            pass
+            if index_type not in self.index:
+                raise ValueError('Invalid index type')
+
+            posting_list = []
+            for term, postings in self.index[index_type].items():
+                if term == word:
+                    posting_list.extend(postings.keys())
+            return posting_list
+
         except:
             return []
 
     def add_document_to_index(self, document: dict):
         """
-        Add a document to all the indexes
+        Add a document to all the indexes.
 
         Parameters
         ----------
         document : dict
-            Document to add to all the indexes
+            Document to add to all the indexes.
         """
 
-        #         TODO
-        pass
+        doc_id = document['id']
+        for index_type, index_data in self.index.items():
+            if index_type == Indexes.DOCUMENTS.value:
+                index_data[doc_id] = document
+            else:
+                terms = document.get(index_type, [])
+                for term in terms:
+                    if term not in index_data:
+                        index_data[term] = {}
+                    if doc_id not in index_data[term]:
+                        index_data[term][doc_id] = terms.count(term)
 
     def remove_document_from_index(self, document_id: str):
         """
-        Remove a document from all the indexes
+        Remove a document from all the indexes.
 
         Parameters
         ----------
         document_id : str
-            ID of the document to remove from all the indexes
+            ID of the document to remove from all the indexes.
         """
 
-        #         TODO
-        pass
+        for index_data in self.index.values():
+            for term, postings in index_data.items():
+                if document_id in postings:
+                    del postings[document_id]
 
     def check_add_remove_is_correct(self):
         """
@@ -145,30 +190,35 @@ class Index:
         self.add_document_to_index(dummy_document)
         index_after_add = copy.deepcopy(self.index)
 
-        if index_after_add[Indexes.DOCUMENTS.value]['100'] != dummy_document:
+        if set(index_after_add[Indexes.DOCUMENTS.value]).difference(index_before_add[Indexes.DOCUMENTS.value]) != dummy_document:
             print('Add is incorrect, document')
             return
 
-        if (set(index_after_add[Indexes.STARS.value]['tim']).difference(set(index_before_add[Indexes.STARS.value]['tim']))
+        if (set(list(index_after_add[Indexes.STARS.value]['tim'].keys())[0]).difference(
+                set(index_before_add[Indexes.STARS.value]['tim']))
                 != {dummy_document['id']}):
             print('Add is incorrect, tim')
             return
 
-        if (set(index_after_add[Indexes.STARS.value]['henry']).difference(set(index_before_add[Indexes.STARS.value]['henry']))
+        if (set(index_after_add[Indexes.STARS.value]['henry']).difference(
+                set(index_before_add[Indexes.STARS.value]['henry']))
                 != {dummy_document['id']}):
             print('Add is incorrect, henry')
             return
-        if (set(index_after_add[Indexes.GENRES.value]['drama']).difference(set(index_before_add[Indexes.GENRES.value]['drama']))
+        if (set(index_after_add[Indexes.GENRES.value]['drama']).difference(
+                set(index_before_add[Indexes.GENRES.value]['drama']))
                 != {dummy_document['id']}):
             print('Add is incorrect, drama')
             return
 
-        if (set(index_after_add[Indexes.GENRES.value]['crime']).difference(set(index_before_add[Indexes.GENRES.value]['crime']))
+        if (set(index_after_add[Indexes.GENRES.value]['crime']).difference(
+                set(index_before_add[Indexes.GENRES.value]['crime']))
                 != {dummy_document['id']}):
             print('Add is incorrect, crime')
             return
 
-        if (set(index_after_add[Indexes.SUMMARIES.value]['good']).difference(set(index_before_add[Indexes.SUMMARIES.value]['good']))
+        if (set(index_after_add[Indexes.SUMMARIES.value]['good']).difference(
+                set(index_before_add[Indexes.SUMMARIES.value]['good']))
                 != {dummy_document['id']}):
             print('Add is incorrect, good')
             return
@@ -200,8 +250,10 @@ class Index:
 
         if index_name not in self.index:
             raise ValueError('Invalid index name')
+        index_data = self.index[index_name]
+        with open(os.path.join(path, f'{index_name}.json'), 'w') as file:
+            json.dump(index_data, file)
 
-        # TODO
         pass
 
     def load_index(self, path: str):
@@ -214,8 +266,11 @@ class Index:
             Path to load the file
         """
 
-        #         TODO
-        pass
+        print(os.path.exists(path))
+        if os.path.exists(path):
+                with open(path, 'r') as file:
+                    return  json.load(file)
+
 
     def check_if_index_loaded_correctly(self, index_type: str, loaded_index: dict):
         """
@@ -270,11 +325,13 @@ class Index:
             if len(docs) == 3:
                 break
 
+
         end = time.time()
         brute_force_time = end - start
 
         # check by getting the posting list of the word
         start = time.time()
+
         # TODO: based on your implementation, you may need to change the following line
         posting_list = self.get_posting_list(check_word, index_type)
 

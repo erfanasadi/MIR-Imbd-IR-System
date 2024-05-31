@@ -80,8 +80,8 @@ class LinkAnalyzer:
 
 if __name__ == "__main__":
     # You can use this section to run and test the results of your link analyzer
-    corpus = []    # TODO: it shoud be your crawled data
-    root_set = []   # TODO: it shoud be a subset of your corpus
+    corpus = []    # TODO: it should be your crawled data
+    root_set = []   # TODO: it should be a subset of your corpus
 
     analyzer = LinkAnalyzer(root_set=root_set)
     analyzer.expand_graph(corpus=corpus)

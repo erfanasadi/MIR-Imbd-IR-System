@@ -1,5 +1,6 @@
 from .indexes_enum import Indexes,Index_types
 import json
+import os
 class Index_reader:
     def __init__(self,path: str, index_name: Indexes, index_type: Index_types = None):
         """
@@ -33,8 +34,10 @@ class Index_reader:
         if self.index_type != None:
             absolute_path = absolute_path + "_" + self.index_type.value
 
-        absolute_path = absolute_path + "_index.json"
-        
+        absolute_path = absolute_path + ".json"
+
         with open(absolute_path, 'r') as file:
             return json.load(file)
+        
+    
         

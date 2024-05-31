@@ -1,10 +1,10 @@
-from .indexes_enum import Indexes, Index_types
-from .index_reader import Index_reader
+from indexes_enum import Indexes, Index_types
+from index_reader import Index_reader
 import json
 
 
 class Tiered_index:
-    def __init__(self, path="index/"):
+    def __init__(self, path="./indexer/"):
         """
         Initializes the Tiered_index.
 
@@ -30,7 +30,7 @@ class Tiered_index:
         self.store_tiered_index(path, Indexes.GENRES)
 
     def convert_to_tiered_index(
-        self, first_tier_threshold: int, second_tier_threshold: int, index_name
+            self, first_tier_threshold: int, second_tier_threshold: int, index_name
     ):
         """
         Convert the current index to a tiered index.
@@ -47,7 +47,7 @@ class Tiered_index:
         Returns
         -------
         dict
-            The tiered index with structure of 
+            The tiered index with structure of
             {
                 "first_tier": dict,
                 "second_tier": dict,
@@ -61,7 +61,15 @@ class Tiered_index:
         first_tier = {}
         second_tier = {}
         third_tier = {}
-        #TODO
+
+        for term, postings in current_index.items():
+            if len(postings) >= first_tier_threshold:
+                first_tier[term] = postings
+            elif len(postings) >= second_tier_threshold:
+                second_tier[term] = postings
+            else:
+                third_tier[term] = postings
+
         return {
             "first_tier": first_tier,
             "second_tier": second_tier,
@@ -72,12 +80,12 @@ class Tiered_index:
         """
         Stores the tiered index to a file.
         """
-        path = path + index_name.value + "_" + Index_types.TIERED.value + "_index.json"
+        path = path + index_name.value + "_" + Index_types.TIERED.value + ".json"
         with open(path, "w") as file:
             json.dump(self.tiered_index[index_name], file, indent=4)
 
 
 if __name__ == "__main__":
     tiered = Tiered_index(
-        path="index/"
+        path="./indexes/"
     )
